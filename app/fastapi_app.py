@@ -9,6 +9,13 @@
 #   Interactive API docs auto-open at:
 #   http://localhost:8000/docs
 # ================================================================
+import os
+from datetime import datetime
+from pathlib import Path
+
+from xgboost import data
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -36,20 +43,22 @@ def home():
 # This means every request reads from memory, not disk
 # Result: <5ms response time vs ~500ms if we read Excel per request
 def load_data():
-    data  = {}
+    data = {}
+
     files = {
-        "rfm"      : "rfm_segments_churn.xlsx",
-        "inventory": "inventory_eoq.xlsx",
-        "forecast" : "demand_forecast.xlsx",
-        "sales"    : "online_retail_CLEANED.xlsx",
+        "rfm": BASE_DIR / "data" / "rfm_segments_churn.xlsx",
+        "inventory": BASE_DIR / "data" / "inventory_eoq.xlsx",
+        "forecast": BASE_DIR / "data" / "demand_forecast.xlsx",
+        "sales": BASE_DIR / "data" / "online_retail_CLEANED.xlsx",
     }
+
     for key, filename in files.items():
-        if os.path.exists(filename):
+        if filename.exists():
             data[key] = pd.read_excel(filename)
-            print(f"  loaded {filename} ({len(data[key]):,} rows)")
+            print(f"Loaded {filename}")
         else:
-            data[key] = pd.DataFrame()
-            print(f"  WARNING: {filename} not found")
+            print(f"WARNING: {filename} not found")
+
     return data
 
 DATA = load_data()
@@ -137,8 +146,7 @@ def get_reorder_recommendation(row: pd.Series) -> str:
     if   risk == "High"  : return f"URGENT: Reorder {eoq} units now. Below safety stock."
     elif risk == "Medium" : return f"Reorder soon: EOQ = {eoq} units. Monitor weekly."
     else                  : return f"Stock healthy. Next reorder at {rop} units remaining."
-
-
+    
 # ════════════════════════════════════════════════════════════
 #   ENDPOINT 1 – Health Check
 #   GET /health

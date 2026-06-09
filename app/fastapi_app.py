@@ -25,7 +25,13 @@ app = FastAPI(
     version     = "1.0.0",
     contact     = {"name": "Ayush Tiwari"},
 )
-
+@app.get("/")
+def home():
+    return {
+        "project": "NeuralRetail AI Sales Intelligence",
+        "status": "running",
+        "docs": "/docs"
+    }
 # ── Load All Data at Startup (once, into RAM) ─────────────────
 # This means every request reads from memory, not disk
 # Result: <5ms response time vs ~500ms if we read Excel per request
